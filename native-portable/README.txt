@@ -5,7 +5,7 @@ CoreTrace
 CPU 总览右侧显示本次采样各核心中的最高主频；窄窗口放在第二行。
 确认固定后收起编辑栏，图表原位置和尺寸不变。右键托盘图标可恢复不透明、编辑、隐藏或退出。
 保留 IntelMSR.bin 和许可文件。设置保存于 settings.ini。
-温度频率需要本机已安装的官方 PawnIO 驱动，目前支持部分 Intel Alder/Raptor Lake 型号。
+温度频率需要本机已安装的官方 PawnIO 驱动；启动时请允许 Windows 管理员授权，没有授权时无法启动。支持部分 Intel Alder/Raptor Lake 型号及 06_9E（含 i7-8750H），读取失败时显示具体原因。
 完整说明与源码：https://github.com/TigerBruce/CoreTrace
 使用指南：https://github.com/TigerBruce/CoreTrace/blob/main/guide/USAGE.md
 项目原创代码采用 MIT 许可证；第三方组件与图标另见 NOTICE.md 和 THIRD-PARTY.txt。

@@ -820,10 +820,17 @@ struct UI {
                        (narrow ? L""
                                : L" · " + memoryText(latest.usedMemory) + L" / " +
                                      memoryText(latest.totalMemory)));
-        text(dc, L"温度", 16, y, w - 32, muted, small);
-        text(dc, L"<65°C", 70, y, 76, RGB(51, 185, 98), small);
-        text(dc, L"65–<80°C", 150, y, 90, RGB(242, 156, 47), small);
-        text(dc, L"≥80°C", 250, y, 80, RGB(242, 76, 85), small);
+        bool temperatureUnavailable =
+            std::any_of(latest.cores.begin(), latest.cores.end(),
+                        [](const auto &reading) { return !std::isfinite(reading.temp); });
+        if (temperatureUnavailable && !state.status.empty()) {
+          text(dc, state.status, 16, y, w - 32, RGB(242, 156, 47), small);
+        } else {
+          text(dc, L"温度", 16, y, w - 32, muted, small);
+          text(dc, L"<65°C", 70, y, 76, RGB(51, 185, 98), small);
+          text(dc, L"65–<80°C", 150, y, 90, RGB(242, 156, 47), small);
+          text(dc, L"≥80°C", 250, y, 80, RGB(242, 76, 85), small);
+        }
         y += 23;
         int cols = columnsFor(w), rows = rowsFor(w), cw = (w - 24 - (cols - 1) * 8) / cols;
         int rowHeight = std::max(56, (contentH - y - config.rankingHeight - 10 - groupSpacing()) /

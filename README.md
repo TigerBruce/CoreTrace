@@ -57,7 +57,7 @@ CoreTrace 把 CPU 历史曲线、每核温度、频率、系统内存和内存�
 
 1. 打开 [Windows build](https://github.com/TigerBruce/CoreTrace/actions/workflows/windows.yml)，选择 `main` 分支最近一次成功的构建。
 2. 在 **Artifacts** 下载 `CoreTrace-windows-x64`（GitHub 可能要求先登录）。解压下载文件，再解压其中的便携 ZIP。
-3. 把整个文件夹放在有写入权限的位置，运行 `CoreTrace.exe`。点击 CPU 总体卡片左上角的小铅笔，调整后点击「固定」。
+3. 把整个文件夹放在有写入权限的位置，运行 `CoreTrace.exe`，允许 Windows 管理员授权提示。点击 CPU 总体卡片左上角的小铅笔，调整后点击「固定」。
 
 构建产物是开发版本，受 GitHub 保留期限限制。当前不承诺稳定版发布周期；也可以直接从源码构建。
 
@@ -77,11 +77,13 @@ powershell -NoProfile -File ./setup-tools.ps1
 
 CPU 占用和内存统计无需额外驱动。每核温度、硬件频率需要另行安装官方 [PawnIO](https://github.com/namazso/PawnIO)，并保留 EXE 同目录的 `IntelMSR.bin`。CoreTrace 不会自动安装驱动。
 
+程序启动时请求管理员权限，以访问 PawnIO。无法取得管理员授权时，当前版本无法启动；即使只查看 CPU 占用和内存，也受此启动要求限制。温度读取失败时，界面会提示不支持的型号、驱动缺失、权限不足或模块加载失败等原因。
+
 | 范围 | 当前状态 |
 | --- | --- |
 | 运行平台 | 面向 Windows 10/11 x64；不提供 ARM64 或 32 位构建 |
 | CPU 与内存统计 | 使用 Windows 系统接口；跨硬件兼容性仍需更多实测 |
-| 温度与硬件频率 | 已实现部分 Intel Alder/Raptor Lake 型号，i5-14600K 已验证 |
+| 温度与硬件频率 | 已实现部分 Intel Alder/Raptor Lake 型号及 06_9E（含 i7-8750H）；i7-8750H 已验证，i5-14600K 有此前版本验证记录，本次未重新实测 |
 | AMD 与其他 CPU 传感器 | 当前未实现；不代表基本负载与内存统计一定不可用 |
 | P/E 分组 | 依据 Windows 上报的效率类别；无法区分时使用 C 编号 |
 

@@ -61,7 +61,9 @@ The setup script downloads a fixed llvm-mingw toolchain and validates its SHA-25
 
 CPU load and memory statistics use Windows interfaces without an extra driver. Temperature and hardware frequency require a separately installed official [PawnIO](https://github.com/namazso/PawnIO) driver and the bundled `IntelMSR.bin` beside the executable. The application never installs the driver automatically.
 
-Sensor support currently covers selected Intel Alder/Raptor Lake models and has been verified on an i5-14600K. AMD sensors and ARM64/32-bit builds are not implemented. Other hardware needs additional testing. Missing sensor values are not zero-temperature readings.
+Sensor support includes selected Intel Alder/Raptor Lake models and model 06_9E, including the i7-8750H. This update was tested on an i7-8750H. An earlier version was tested on an i5-14600K; that CPU was not retested for this update. AMD sensors and ARM64/32-bit builds are not implemented. Other hardware needs additional testing. Missing sensor values are not zero-temperature readings.
+
+Launch requests Windows administrator approval for PawnIO access. Without elevation, this version cannot start, even for CPU load and memory statistics. Sensor failures now display a specific reason, such as an unsupported model, missing driver, denied access or module load failure.
 
 ## CPU metrics
 

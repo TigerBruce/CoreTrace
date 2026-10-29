@@ -137,6 +137,12 @@ class Sensors {
   Close close = nullptr;
   std::vector<float> targets;
   double busMHz = 0;
+  std::wstring failure;
+  static std::wstring errorCode(unsigned long code) {
+    std::wostringstream out;
+    out << L" (0x" << std::hex << std::uppercase << code << L")";
+    return out.str();
+  }
   bool read(uint32_t reg, uint64_t &value) {
     if (!handle)
       return false;
@@ -153,35 +159,71 @@ public:
     memcpy(vendor, &b, 4);
     memcpy(vendor + 4, &d, 4);
     memcpy(vendor + 8, &c, 4);
-    if (strcmp(vendor, "GenuineIntel") != 0)
+    if (strcmp(vendor, "GenuineIntel") != 0) {
+      failure = L"温度不可用：当前仅支持部分 Intel 处理器";
       return;
+    }
     __cpuid(1, a, b, c, d);
     unsigned family = (a >> 8) & 15, model = ((a >> 4) & 15) | ((a >> 12) & 240);
     if (family != 6 ||
-        (model != 0x97 && model != 0x9a && model != 0xb7 && model != 0xba && model != 0xbf))
+        (model != 0x9e && model != 0x97 && model != 0x9a && model != 0xb7 && model != 0xba &&
+         model != 0xbf)) {
+      failure = L"温度不可用：未支持的 CPU 型号" + errorCode(model);
       return;
+    }
+    // Coffee Lake (06_9E, including i7-8750H) uses the same temperature-target,
+    // thermal-status and platform/performance MSRs as the existing models.
+    __cpuid(6, a, b, c, d);
+    if (!(a & 1)) {
+      failure = L"温度不可用：CPU 未报告数字温度传感器";
+      return;
+    }
     wchar_t install[32768];
     DWORD bytes = sizeof(install);
-    if (RegGetValueW(HKEY_LOCAL_MACHINE,
+    auto registryResult = RegGetValueW(HKEY_LOCAL_MACHINE,
                      L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\PawnIO",
-                     L"InstallLocation", RRF_RT_REG_SZ, nullptr, install, &bytes) != ERROR_SUCCESS)
+                     L"InstallLocation", RRF_RT_REG_SZ, nullptr, install, &bytes);
+    if (registryResult != ERROR_SUCCESS) {
+      failure = registryResult == ERROR_FILE_NOT_FOUND
+                    ? L"温度不可用：请安装 PawnIO 后重启程序"
+                    : L"温度不可用：无法读取 PawnIO 安装位置" + errorCode(registryResult);
       return;
+    }
     auto path = std::wstring(install) + L"\\PawnIOLib.dll";
     dll = LoadLibraryExW(path.c_str(), nullptr,
                          LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
-    if (!dll)
+    if (!dll) {
+      failure = L"温度不可用：PawnIOLib.dll 加载失败" + errorCode(GetLastError());
       return;
+    }
     auto open = (Open)GetProcAddress(dll, "pawnio_open");
     auto load = (Load)GetProcAddress(dll, "pawnio_load");
     execute = (Execute)GetProcAddress(dll, "pawnio_execute");
     close = (Close)GetProcAddress(dll, "pawnio_close");
-    if (!open || !load || !execute || !close)
+    if (!open || !load || !execute || !close) {
+      failure = L"温度不可用：PawnIO 接口不完整，请修复安装";
       return;
-    if (FAILED(open(&handle)))
+    }
+    auto result = open(&handle);
+    if (FAILED(result)) {
+      handle = nullptr;
+      failure = result == E_ACCESSDENIED
+                    ? L"温度不可用：PawnIO 拒绝访问，请以管理员身份运行"
+                    : L"温度不可用：PawnIO 驱动打开失败";
+      failure += errorCode(result);
       return;
+    }
     std::ifstream f(std::filesystem::path(basePath() + L"\\IntelMSR.bin"), std::ios::binary);
     std::vector<unsigned char> blob((std::istreambuf_iterator<char>(f)), {});
-    if (blob.empty() || FAILED(load(handle, blob.data(), blob.size()))) {
+    if (blob.empty()) {
+      failure = L"温度不可用：IntelMSR.bin 缺失或无法读取";
+      close(handle);
+      handle = nullptr;
+      return;
+    }
+    result = load(handle, blob.data(), blob.size());
+    if (FAILED(result)) {
+      failure = L"温度不可用：IntelMSR.bin 加载失败" + errorCode(result);
       close(handle);
       handle = nullptr;
       return;
@@ -189,8 +231,10 @@ public:
     GROUP_AFFINITY old{}, set{};
     set.Group = cores[0].group;
     set.Mask = KAFFINITY(1) << cores[0].threads[0];
-    if (!SetThreadGroupAffinity(GetCurrentThread(), &set, &old))
+    if (!SetThreadGroupAffinity(GetCurrentThread(), &set, &old)) {
+      failure = L"温度不可用：无法绑定 CPU 核心" + errorCode(GetLastError());
       return;
+    }
     uint64_t platform = 0;
     if (read(0xCE, platform)) {
       unsigned ratio = (platform >> 8) & 255;
@@ -224,6 +268,7 @@ public:
       }
     }
   }
+  const std::wstring &status() const { return failure; }
   void sample(const std::vector<Core> &cores, std::vector<Reading> &values) {
     if (!handle || targets.size() != cores.size())
       return;
@@ -478,7 +523,9 @@ void Sampler::run() {
       state.status = L"";
       if (std::any_of(frame.cores.begin(), frame.cores.end(),
                       [](auto &r) { return !std::isfinite(r.temp); }))
-        state.status = L"部分温度不可用：请检查硬件支持 / PawnIO 权限";
+        state.status = sensors.status().empty()
+                           ? L"部分温度不可用：核心温度寄存器读取失败或读数无效"
+                           : sensors.status();
       if (!procOk)
         state.status += L" 进程统计不可用";
       if (!std::isfinite(frame.cpu))
@@ -493,10 +540,20 @@ void Sampler::run() {
 }
 void report(const State &s, const std::wstring &path, double cpu, double working, double commit) {
   std::ofstream f{std::filesystem::path(path)};
+  // Keep diagnostics useful when all readings are null; emit status as UTF-8 JSON.
+  int bytes = WideCharToMultiByte(CP_UTF8, 0, s.status.data(), (int)s.status.size(), nullptr, 0,
+                                  nullptr, nullptr);
+  std::string status(bytes, '\0');
+  if (bytes)
+    WideCharToMultiByte(CP_UTF8, 0, s.status.data(), (int)s.status.size(), status.data(), bytes,
+                        nullptr, nullptr);
+  for (char &ch : status)
+    if (ch == '"' || ch == '\\' || (unsigned char)ch < 32)
+      ch = '_';
   f << "{\n  \"cpu_percent\": " << cpu << ",\n  \"working_set_mb\": " << working
     << ",\n  \"private_commit_mb\": " << commit << ",\n  \"sample_ms\": " << s.sampleMilliseconds
     << ",\n  \"samples\": " << s.count << ",\n  \"core_count\": " << s.cores.size()
-    << ",\n  \"cores\": [";
+    << ",\n  \"status\": \"" << status << "\",\n  \"cores\": [";
   if (s.count) {
     auto &frame = s.latest();
     for (size_t i = 0; i < s.cores.size(); i++) {
@@ -504,10 +561,13 @@ void report(const State &s, const std::wstring &path, double cpu, double working
         f << ',';
       auto r = frame.cores[i];
       f << "{\"load\":" << (std::isfinite(r.load) ? std::to_string(r.load) : "null")
+        << ",\"utility\":" << (std::isfinite(r.utility) ? std::to_string(r.utility) : "null")
         << ",\"temp\":" << (std::isfinite(r.temp) ? std::to_string(r.temp) : "null")
         << ",\"ghz\":" << (std::isfinite(r.ghz) ? std::to_string(r.ghz) : "null") << '}';
     }
-    f << "],\n \"total_memory\": " << frame.totalMemory
+    f << "],\n \"cpu_time_percent\": " << (std::isfinite(frame.cpu) ? std::to_string(frame.cpu) : "null")
+      << ",\n \"cpu_utility_percent\": " << (std::isfinite(frame.cpuUtility) ? std::to_string(frame.cpuUtility) : "null")
+      << ",\n \"total_memory\": " << frame.totalMemory
       << ",\n \"used_memory\": " << frame.usedMemory << ",\n \"top_memory\": [";
     for (size_t i = 0; i < 5; i++) {
       if (i)

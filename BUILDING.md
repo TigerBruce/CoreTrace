@@ -26,7 +26,7 @@
 
 ## 硬件监控依赖
 
-CPU 占用和内存统计不需要 PawnIO。每核温度、硬件频率需要另行安装官方 [PawnIO](https://github.com/namazso/PawnIO) 驱动。应用不会自动安装驱动。当前实现仅为代码中列出的 Intel Alder/Raptor Lake 型号读取 MSR，其他型号的温度和频率可能不可用。
+CPU 占用和内存统计不需要 PawnIO。每核温度、硬件频率需要另行安装官方 [PawnIO](https://github.com/namazso/PawnIO) 驱动。应用不会自动安装驱动。支持范围为 06_9E（含 i7-8750H）及代码中列出的 Intel Alder/Raptor Lake 型号，其他型号的温度和频率可能不可用。程序清单要求启动时取得管理员授权；没有授权时，当前版本无法启动，包括仅使用基本统计的场景。
 
 `native-portable/IntelMSR.bin` 是必需的第三方签名模块，不是临时编译垃圾；保持它与 EXE 同目录。模块来源、上游源码和许可证见 `native-portable/THIRD-PARTY.txt`。项目原创代码采用根目录 MIT `LICENSE`；第三方材料与图标范围见 [NOTICE.md](NOTICE.md)。
 
