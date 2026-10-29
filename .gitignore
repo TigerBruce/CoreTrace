@@ -1,5 +1,6 @@
 # Downloaded compilers and installers
 /tools/
+/dist/
 # Local run settings, generated binaries and resource objects
 /native-portable/*.exe
 /native-portable/settings.ini

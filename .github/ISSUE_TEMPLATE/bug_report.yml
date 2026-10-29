@@ -1,0 +1,30 @@
+name: 问题反馈 / Bug report
+description: 报告显示、统计或运行问题 / Report a reproducible problem
+title: "[Bug] "
+body:
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境 / Environment
+      description: 提交号或构建来源、Windows 版本、CPU 型号；传感器问题请注明 PawnIO。
+      placeholder: "Build: … / Windows: … / CPU: … / PawnIO: …"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      description: 从启动程序开始，说明如何触发问题。
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 预期和实际 / Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: 相关设置与截图 / Settings and screenshots
+      description: CPU 问题注明 Utility/Time 和比较工具。显示问题注明主题、字号、系统缩放与固定/编辑模式。不要上传私人配置或无关桌面内容。

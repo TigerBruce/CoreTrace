@@ -5,6 +5,10 @@ CoreTrace
 CPU 总览右侧显示本次采样各核心中的最高主频；窄窗口放在第二行。
 确认固定后收起编辑栏，图表原位置和尺寸不变。右键托盘图标可恢复不透明、编辑、隐藏或退出。
 保留 IntelMSR.bin 和许可文件。设置保存于 settings.ini。
-温度频率需要本机已安装的官方 PawnIO 驱动。完整说明与源码位于上级目录。
+温度频率需要本机已安装的官方 PawnIO 驱动，目前支持部分 Intel Alder/Raptor Lake 型号。
+完整说明与源码：https://github.com/TigerBruce/CoreTrace
+使用指南：https://github.com/TigerBruce/CoreTrace/blob/main/guide/USAGE.md
+项目原创代码采用 MIT 许可证；第三方组件与图标另见 NOTICE.md 和 THIRD-PARTY.txt。
+此便携包为未进行发布者代码签名的开发构建。
 
 CPU 统计方式可在编辑区底部的“CPU 统计”菜单或托盘右键菜单切换，设置会保存。默认“任务管理器（Utility）”：总体直接读取 Windows Processor Information(_Total) 的 % Processor Utility，数值和图表限制在 0–100%；每个物理核心取其逻辑线程 Utility 最大值。另一选项“忙碌时间（Time）”保留原算法：总体平均所有逻辑处理器的 % Processor Time，每核取最忙线程。两种指标在同一次采样中采集并保存于现有70帧内存历史，切换时全部历史同步改变，暂停期间也可切换，不混合口径。悬停的应用 CPU 前五仍是忙碌时间并明确标注。Utility 对齐本机 Windows 任务管理器的统计口径，独立采样可能存在短时差异；不同 Windows 版本的任务管理器可能使用不同口径。两种模式都不代表物理计算资源已全部耗尽，也不限定为某一个应用。
