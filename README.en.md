@@ -17,19 +17,13 @@ CoreTrace is a resizable desktop monitor for CPU load history, per-core temperat
 
 The application UI is currently in Chinese. This English overview is for users and contributors browsing the project.
 
-## Designed to leave resources for your work
+## Lightweight by design
 
-**Low CPU usage and low system-memory usage are core design goals.** CoreTrace uses native C++ / Win32 / GDI, with specific optimizations for sampling, history storage and rendering resources, so a desktop monitor takes less away from simulation, compilation and everyday work.
+- **Low CPU overhead**: roughly one-second sampling, a below-normal-priority worker and on-demand rendering.
+- **Small memory footprint**: native C++, no browser engine or .NET; a fixed 70-frame history with reusable buffers and drawing resources.
+- **Local and portable**: no app installation, network requests or continuous logging during normal use.
 
-| Focus | Implemented design | Benefit |
-| --- | --- | --- |
-| **CPU overhead** | Waits about one second between sampling passes, without busy polling or catch-up bursts; sampling runs below normal thread priority | Fewer frequent wakeups and lower scheduling priority for monitoring work |
-| **Rendering overhead** | Repaints on data updates and UI events, with no continuous animation; sample updates do not request repaint while paused, hidden or minimized | Avoids repeatedly painting frozen or invisible charts; background sampling continues |
-| **Memory footprint** | No browser engine or .NET runtime; a fixed 70-frame history ring | Less runtime overhead, with history storage that does not grow indefinitely with uptime |
-| **Resource reuse** | Reuses the process-query buffer and drawing surfaces; rebuilds drawing bitmaps only on size changes; releases the extra alpha-compositing surface in opaque mode | Reduces repeated allocation and unnecessary drawing memory |
-| **Background activity** | No network requests or continuous telemetry logging during normal operation | Avoids periodic uploads and log writes |
-
-Memory footprint means the application's own system RAM usage, not DDR bandwidth. Actual overhead depends on window pixel dimensions, transparency, core count and process count; these are implemented design choices, not a fixed CPU or RAM guarantee across machines.
+Actual usage varies with window size, transparency and hardware. [Metric and implementation details →](guide/METRICS.md)
 
 | Dark | Light |
 | :---: | :---: |
@@ -46,7 +40,6 @@ These previews use the actual renderer with synthetic demonstration data, not pe
 - Drag-to-resize layout, independently resizable ranking, linked CPU/memory summary heights.
 - Dark/light themes, separate background/card transparency, global font size and font selection.
 - 20/40/60-second history, pause, tray controls, and two CPU metrics.
-- Native Win32/GDI rendering; no Electron, WebView or .NET dependency. No network access during normal operation.
 
 ## Run or build
 
@@ -75,12 +68,6 @@ Sensor support currently covers selected Intel Alder/Raptor Lake models and has 
 **Utility (default)** reads Windows `% Processor Utility`, using the direct `_Total` counter for overall usage. **Time** reads `% Processor Time`; its overall value averages logical processors. Each physical-core chart shows the maximum value among its logical threads in either mode. Display values are capped at 100%.
 
 Utility follows the metric used by Task Manager on the development machine; independent sampling and Windows versions can still cause differences. Neither metric measures every physical execution resource or predicts spare simulation throughput. See [metric details](guide/METRICS.md) (Chinese).
-
-## Resource use and data
-
-A bounded 70-frame history is kept in memory. Sampling waits about one second between passes and runs below normal thread priority. Rendering is driven by updates and UI events, without continuous animation. Window dimensions and transparency affect bitmap memory; no universal CPU/memory guarantee or long-run stability claim is made.
-
-Settings live beside the executable in `settings.ini`. Normal use does not persist telemetry logs. Explicit diagnostic modes in the source can produce local files.
 
 ## Contributing and license
 
