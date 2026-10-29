@@ -4,7 +4,7 @@
 
 **Per-core CPU history, temperature and memory usage in a corner of your desktop.**
 
-Native Windows · C++ / Win32 · Portable
+Low CPU overhead · Small memory footprint · Native Windows · Portable
 
 [![Windows build](https://github.com/TigerBruce/CoreTrace/actions/workflows/windows.yml/badge.svg)](https://github.com/TigerBruce/CoreTrace/actions/workflows/windows.yml)
 [![MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -16,6 +16,20 @@ Native Windows · C++ / Win32 · Portable
 CoreTrace is a resizable desktop monitor for CPU load history, per-core temperature and frequency, system memory, and the five largest process-name groups by private working set. Pin the layout to hide its controls; normal application windows can cover it. A small pencil button opens the editor again.
 
 The application UI is currently in Chinese. This English overview is for users and contributors browsing the project.
+
+## Designed to leave resources for your work
+
+**Low CPU usage and low system-memory usage are core design goals.** CoreTrace uses native C++ / Win32 / GDI, with specific optimizations for sampling, history storage and rendering resources, so a desktop monitor takes less away from simulation, compilation and everyday work.
+
+| Focus | Implemented design | Benefit |
+| --- | --- | --- |
+| **CPU overhead** | Waits about one second between sampling passes, without busy polling or catch-up bursts; sampling runs below normal thread priority | Fewer frequent wakeups and lower scheduling priority for monitoring work |
+| **Rendering overhead** | Repaints on data updates and UI events, with no continuous animation; sample updates do not request repaint while paused, hidden or minimized | Avoids repeatedly painting frozen or invisible charts; background sampling continues |
+| **Memory footprint** | No browser engine or .NET runtime; a fixed 70-frame history ring | Less runtime overhead, with history storage that does not grow indefinitely with uptime |
+| **Resource reuse** | Reuses the process-query buffer and drawing surfaces; rebuilds drawing bitmaps only on size changes; releases the extra alpha-compositing surface in opaque mode | Reduces repeated allocation and unnecessary drawing memory |
+| **Background activity** | No network requests or continuous telemetry logging during normal operation | Avoids periodic uploads and log writes |
+
+Memory footprint means the application's own system RAM usage, not DDR bandwidth. Actual overhead depends on window pixel dimensions, transparency, core count and process count; these are implemented design choices, not a fixed CPU or RAM guarantee across machines.
 
 | Dark | Light |
 | :---: | :---: |
