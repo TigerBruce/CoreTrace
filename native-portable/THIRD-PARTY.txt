@@ -1,0 +1,8 @@
+CoreTrace Native dependency notices
+
+IntelMSR.bin: unmodified signed PawnIO IntelMSR module, distributed with LibreHardwareMonitor 0.9.6, source commit 3d331e3370efb858411f19511373eff65a218701.
+Module project: https://github.com/namazso/PawnIO.Modules (LGPL-2.1-or-later; see LICENSE-PawnIO-Modules.txt). The file is external and replaceable. Module sources and build instructions are available from that project. LHM extraction source: https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/tree/3d331e3370efb858411f19511373eff65a218701 (MPL-2.0; license included). No managed LHM DLL is loaded by the native app.
+
+PawnIOLib.dll: loaded dynamically from the separately installed official PawnIO package; not copied into this portable folder. https://github.com/namazso/PawnIO
+
+Compiler/runtime: llvm-mingw 20261020 UCRT x86_64; LLVM license and exceptions in LICENSE-LLVM.txt. Windows UCRT is supplied by Windows. Toolchain source and other component notices: https://github.com/mstorsjo/llvm-mingw/releases/tag/20261020

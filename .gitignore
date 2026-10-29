@@ -1,0 +1,20 @@
+# Downloaded compilers and installers
+/tools/
+# Local run settings, generated binaries and resource objects
+/native-portable/*.exe
+/native-portable/settings.ini
+*.res
+*.obj
+*.o
+*.pdb
+*.ilk
+*.log
+# Local screenshots, diagnostics, benchmarks and historical reports
+/docs/
+/native-portable/*.bmp
+/native-portable/*.json
+# Editors and OS files
+.vs/
+.vscode/
+Thumbs.db
+Desktop.ini
